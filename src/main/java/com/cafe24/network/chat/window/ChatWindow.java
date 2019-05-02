@@ -27,6 +27,7 @@ public class ChatWindow{
 	private Frame frame;
 	private Panel pannel;
 	private Button buttonSend;
+	private Button buttonwhisper;
 	private TextField textField;
 	private TextArea textArea;
 	private Socket socket = null;
@@ -36,6 +37,7 @@ public class ChatWindow{
 		frame = new Frame(name);
 		pannel = new Panel();
 		buttonSend = new Button("Send");
+		buttonwhisper = new Button("Whisper");
 		textField = new TextField();
 		textArea = new TextArea(30, 80);
 		this.socket = socket;
@@ -71,6 +73,16 @@ public class ChatWindow{
 			}
 		});
 		
+		//Button whisper
+		buttonwhisper.setBackground(Color.CYAN);
+		buttonwhisper.setForeground(Color.WHITE);
+		buttonwhisper.addActionListener( new ActionListener() {
+			@Override
+			public void actionPerformed( ActionEvent actionEvent ) {
+				sendWhisper();
+			}
+		});
+		
 		// Textfield
 		textField.setColumns(80);
 		textField.addKeyListener(new KeyAdapter() {
@@ -89,6 +101,7 @@ public class ChatWindow{
 		pannel.setBackground(Color.LIGHT_GRAY);
 		pannel.add(textField);
 		pannel.add(buttonSend);
+		pannel.add(buttonwhisper);
 		frame.add(BorderLayout.SOUTH, pannel);
 
 		// TextArea
@@ -128,6 +141,23 @@ public class ChatWindow{
 			PrintWriter pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
 			
 			pw.println("message:"+message);
+			pw.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		textField.setText("");
+		textField.requestFocus();
+	}
+	
+	private void sendWhisper() {
+		System.out.println("whisper");
+		String message = textField.getText();
+		// 메시지 프로토콜 써서 보내기 pr.println("msg" + message);
+		try {
+			PrintWriter pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
+			
+			pw.println("whisper:"+message);
 			pw.flush();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -18,6 +18,7 @@ public class ChatServer {
 		ServerSocket serverSocket = null;
 
 		List<Writer> listWriters = new ArrayList<Writer>();
+		List<String> listIDs = new ArrayList<String>();
 		try {
 			// 1. 서버 소켓 생성
 			serverSocket = new ServerSocket();
@@ -30,7 +31,7 @@ public class ChatServer {
 			// 3. 요청 대기
 			while (true) {
 				Socket socket = serverSocket.accept();
-				new ChatServerThread(socket, listWriters).start();
+				new ChatServerThread(socket, listWriters, listIDs).start();
 			}
 			
 		} catch (SocketException e) {

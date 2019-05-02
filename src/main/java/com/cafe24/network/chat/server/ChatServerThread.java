@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatServerThread extends Thread{
@@ -18,11 +22,13 @@ public class ChatServerThread extends Thread{
 	BufferedReader br = null;
 	PrintWriter pw = null;
 	private List<Writer> listWriters = null;
+	private List<String> listIDs = null;
 	Writer writer = null;
 	
-	public ChatServerThread(Socket socket, List<Writer> listWriters) {
+	public ChatServerThread(Socket socket, List<Writer> listWriters, List<String> listIDs) {
 		this.socket = socket;
 		this.listWriters = listWriters;
+		this.listIDs = listIDs;
 	}
 	
 	
@@ -56,7 +62,11 @@ public class ChatServerThread extends Thread{
 					doMessage(tokens[1]);
 				} else if("quit".equals(tokens[0])) {
 					doQuit(writer);
-				} else {
+				} else if("whisper".equals(tokens[0])) {
+					System.out.println("서버 휘스퍼");
+					doWhisper(tokens[1],tokens[2]);
+					
+				}  else {
 					ChatServer.log("에러: 알수 없는 요청("+ tokens[0] + ")");
 				}
 				
@@ -78,6 +88,22 @@ public class ChatServerThread extends Thread{
 	
 	}
 	
+	// 귓말
+	private void doWhisper(String user, String data) {
+		System.out.println("dowhisper");
+		unicast(user, data);
+	}
+
+	// 단일 통신
+	private void unicast(String user, String data) {
+		System.out.println("unicast");
+
+		PrintWriter pw = (PrintWriter) listWriters.get(listIDs.indexOf(user));
+		pw.println("귓말=>"+ nickname + ": " + data);
+		pw.flush();
+	}
+
+
 	// 가입 로직
 	private void doJoin(String nickname, Writer writer) {
 		this.nickname = nickname;
@@ -87,19 +113,22 @@ public class ChatServerThread extends Thread{
 		
 		// writer pool 에 저장
 		addWriter(writer);
+		addID(nickname);
 		
 		// ack
 		pw.println("success");
 		pw.flush();
 	}
 	
+
+
 	private void doMessage(String data) {
 		broadcast(data);
 	}
 
 	private void doQuit(Writer writer) {
 		removeWriter(writer);
-		
+		removeID(nickname);
 		String data = nickname + "님이 퇴장 하였습니다.";
 		broadcast(data);
 	}
@@ -126,5 +155,17 @@ public class ChatServerThread extends Thread{
 		}
 	}
 	
+	// 가입시 id 가 저장
+	private void addID(String nickname) {
+		synchronized (listIDs) {
+			listIDs.add(nickname);
+		}
+	}
+	
+	private void removeID(String nickname) {
+		synchronized (listWriters) {
+			listIDs.remove(nickname);
+		}
+	}
 
 }
