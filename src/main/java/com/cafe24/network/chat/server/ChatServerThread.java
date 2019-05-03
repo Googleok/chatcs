@@ -74,6 +74,9 @@ public class ChatServerThread extends Thread{
 		
 		} catch (SocketException e) {
 			System.out.println("[server] sudden closed by client");
+			removeID(nickname);
+			String users = arrayToString();
+			broadcast("_"+users);
 		}catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -110,17 +113,28 @@ public class ChatServerThread extends Thread{
 		
 		String data = nickname + "님이 참여하였습니다.";
 		broadcast(data);
-		
 		// writer pool 에 저장
 		addWriter(writer);
 		addID(nickname);
 		
+		String users = arrayToString();
+		
+		
 		// ack
-		pw.println("success");
+		pw.println("success:"+users);
 		pw.flush();
+
+		broadcast("_"+users);
 	}
 	
-
+	private String arrayToString() {
+		String ids = "";
+		for (int i = 0; i < listIDs.size(); i++) {
+			ids += listIDs.get(i)+",";
+		}
+		System.out.println("ids=="+ids);
+		return ids;
+	}
 
 	private void doMessage(String data) {
 		broadcast(data);
@@ -129,8 +143,11 @@ public class ChatServerThread extends Thread{
 	private void doQuit(Writer writer) {
 		removeWriter(writer);
 		removeID(nickname);
+		
 		String data = nickname + "님이 퇴장 하였습니다.";
 		broadcast(data);
+		String users = arrayToString();
+		broadcast("_"+users);
 	}
 
 	private void addWriter(Writer writer) {

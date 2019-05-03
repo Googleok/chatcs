@@ -6,6 +6,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import com.cafe24.network.chat.client.ChatClient;
@@ -18,6 +21,7 @@ public class ChatClientApp {
 		String name = null;
 		Scanner scanner = new Scanner(System.in);
 		Socket socket = null;
+		List<String> userList = new ArrayList<String>();
 		while( true ) {
 			System.out.println("대화명을 입력하세요.");
 			System.out.print(">>> ");
@@ -45,14 +49,23 @@ public class ChatClientApp {
 			pw.flush();
 			
 			String successJoin = br.readLine();
-			if(successJoin.equals("success")) {
+			String[] tokens = successJoin.split(":");
+			if(tokens[0].equals("success")) {
 				//6. ChatClientReceiveThread 시작
-				ChatWindow window = new ChatWindow(name, socket);
+				String[] users = tokens[1].split(",");
+				for (int i = 0; i < users.length; i++) {
+					userList.add(users[i]);
+					System.out.println("user=="+users[i]);
+				}
+				
+				ChatWindow window = new ChatWindow(name, socket, userList);
 				window.show();
 			}else {
 				System.out.println("가입이 승인되지 않았습니다.");
 			}
-		} catch (IOException e) {
+		}catch (SocketException e) {
+			e.printStackTrace();
+		}catch (IOException e) {
 			e.printStackTrace();
 		}
 		scanner.close();
